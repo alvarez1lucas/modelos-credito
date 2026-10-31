@@ -1,0 +1,56 @@
+# Configuración central del proyecto modelos-credito.
+
+paths:
+  fotos: ../ciclo-credito/data/snapshots   # fotos de Bondora del proyecto umbrales-credito (en Actions, del release `fotos`)
+  outputs: outputs
+  guardados: modelos_guardados             # modelos congelados: el monitoreo los evalúa sin reentrenar
+
+datos:
+  dias_evento: 90
+  horizonte_meses: 12      # el evento se mide a 12 meses del otorgamiento
+  desde: 2023-10-01        # desde acá el rating cubre todos los créditos
+  fin_entrenamiento: 2024-09-30
+  fin_validacion: 2024-12-31
+  # prueba: lo posterior a fin_validacion con 12 meses de antigüedad; no se toca para elegir nada
+
+scorecard:
+  bins: 8                  # tramos iniciales por variable continua
+  iv_minimo: 0.02          # debajo de esto la variable se descarta
+  puntos_base: 600         # puntos con odds base
+  odds_base: 50            # 50 buenos por cada malo en puntos_base
+  pdo: 20                  # puntos para duplicar las odds
+
+lightgbm:
+  base:
+    n_estimators: 400
+    subsample: 0.8
+    subsample_freq: 1
+    colsample_bytree: 0.8
+    reg_lambda: 5.0
+    random_state: 7
+    verbose: -1
+  grilla:                  # se elige por Gini en validación
+    - {learning_rate: 0.03, num_leaves: 7,  min_child_samples: 200}
+    - {learning_rate: 0.03, num_leaves: 15, min_child_samples: 200}
+    - {learning_rate: 0.03, num_leaves: 31, min_child_samples: 500}
+    - {learning_rate: 0.01, num_leaves: 7,  min_child_samples: 500}
+    - {learning_rate: 0.01, num_leaves: 15, min_child_samples: 500}
+    - {learning_rate: 0.01, num_leaves: 31, min_child_samples: 1000}
+    - {learning_rate: 0.05, num_leaves: 5,  min_child_samples: 1000}
+
+corte:
+  costos_pp: [0, 5, 10, 15]  # SUPUESTO: fondeo + operación en puntos sobre el monto
+  costo_central_pp: 10
+  lgd: 0.69                  # LGD madura del proyecto umbrales-credito (encadenada: 0.50)
+  lgd_baja: 0.50
+
+monitoreo:                     # umbrales de las alertas
+  caida_gini: {vigilar: 0.03, actuar: 0.05}
+  brecha_pp: {vigilar: 1.0, actuar: 2.0}         # observado - predicho en la última cosecha madura
+  brecha_pais_pp: {vigilar: 3.0, actuar: 5.0}
+  psi: {vigilar: 0.10, actuar: 0.25}
+
+sitio:
+  destino: site
+  url: https://alvarez1lucas.github.io/modelos-credito/
+  repo_url: https://github.com/alvarez1lucas/modelos-credito

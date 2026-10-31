@@ -1,0 +1,33 @@
+# Datos crudos y pesados (se regeneran con el pipeline)
+/data/raw/
+/data/interim/
+
+# Entornos y caches
+/.venv/
+/venv/
+__pycache__/
+*.py[cod]
+/.pytest_cache/
+/build/
+/dist/
+*.egg-info/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Editor / SO
+/.vscode/
+.DS_Store
+Thumbs.db
+
+# Sitio generado (se construye y publica en GitHub Actions)
+/site/
+
+# Fotos de Bondora, tablas procesadas y la base DuckDB (se regeneran; las fotos van como assets de releases)
+/data/snapshots/
+/data/processed/
+/data/warehouse/
+/dbt_ciclo/target/
+/dbt_ciclo/logs/
+/dbt_ciclo/dbt_packages/
+/logs/
