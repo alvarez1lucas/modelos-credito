@@ -487,7 +487,7 @@ def readme(d: dict, L: str) -> str:
 
 {badges}
 
-**[Live site]({url}en/)** · **[Model card](docs/ficha_modelo.md)** · [Versión en español](README_ES.md)
+**[Live site]({url}en/)** · **[Interactive app]({cfg['app_url']})** · **[Model card](docs/ficha_modelo.md)** · [Versión en español](README_ES.md)
 
 A risk model is judged by the decisions it improves, not by its Gini. This project trains on old vintages of a real consumer portfolio, measures on later ones, and always compares against the rating the lender already has. No Kaggle datasets.
 
@@ -502,7 +502,7 @@ A risk model is judged by the decisions it improves, not by its Gini. This proje
 | Does it still hold? | It ranks well but the level shifted: gap from {c['br_ini']} to {c['br_fin']} points with a stable Gini |
 | What does a 12-month model miss? | Default goes from {c['d12']}% at 12 months to {c['d36']}% at 36; treating prepayment as censoring would say {c['km36']}% |
 
-**Stack:** Python (scikit-learn, LightGBM, SHAP, pandas, DuckDB), scorecard with WoE/IV built by hand, Aalen-Johansen for competing risks, pytest, GitHub Actions, GitHub Pages.
+**Stack:** Python (scikit-learn, LightGBM, SHAP, pandas, DuckDB), scorecard with WoE/IV built by hand, Aalen-Johansen for competing risks, Streamlit, pytest, GitHub Actions, GitHub Pages.
 
 ## Reproduce
 
@@ -512,6 +512,7 @@ Requires the Bondora snapshots from [umbrales-credito](https://github.com/alvare
 pip install -r requirements.txt && pip install -e .
 python -m modelos.entrenar && python -m modelos.corte && python -m modelos.validacion
 python -m modelos.supervivencia && python -m modelos.monitoreo && python -m modelos.sitio
+python -m modelos.exportar_app && streamlit run app/streamlit_app.py
 pytest
 ```
 
@@ -521,7 +522,7 @@ Author: Lucas Alvarez · [GitHub](https://github.com/alvarez1lucas) · Related: 
 
 {badges}
 
-**[Sitio]({url})** · **[Ficha del modelo](docs/ficha_modelo.md)** · [English version](README.md)
+**[Sitio]({url})** · **[App interactiva]({cfg['app_url']})** · **[Ficha del modelo](docs/ficha_modelo.md)** · [English version](README.md)
 
 Un modelo de riesgo se juzga por las decisiones que mejora, no por su Gini. Este proyecto entrena con cosechas viejas de una cartera de consumo real, mide con cosechas posteriores y compara siempre contra el rating que la empresa ya tiene. Sin datasets de Kaggle.
 
@@ -536,7 +537,7 @@ Un modelo de riesgo se juzga por las decisiones que mejora, no por su Gini. Este
 | ¿Sigue valiendo? | Ordena bien, pero el nivel se corrió: brecha de {c['br_ini']} a {c['br_fin']} puntos con el Gini estable |
 | ¿Qué no ve a 12 meses? | El default pasa de {c['d12']}% a 12 meses a {c['d36']}% a 36; tratar la cancelación como censura diría {c['km36']}% |
 
-**Stack:** Python (scikit-learn, LightGBM, SHAP, pandas, DuckDB), scorecard con WoE/IV escrita a mano, Aalen-Johansen para riesgos competidores, pytest, GitHub Actions, GitHub Pages.
+**Stack:** Python (scikit-learn, LightGBM, SHAP, pandas, DuckDB), scorecard con WoE/IV escrita a mano, Aalen-Johansen para riesgos competidores, Streamlit, pytest, GitHub Actions, GitHub Pages.
 
 ## Reproducir
 
@@ -546,6 +547,7 @@ Necesita las fotos de Bondora de [umbrales-credito](https://github.com/alvarez1l
 pip install -r requirements.txt && pip install -e .
 python -m modelos.entrenar && python -m modelos.corte && python -m modelos.validacion
 python -m modelos.supervivencia && python -m modelos.monitoreo && python -m modelos.sitio
+python -m modelos.exportar_app && streamlit run app/streamlit_app.py
 pytest
 ```
 
