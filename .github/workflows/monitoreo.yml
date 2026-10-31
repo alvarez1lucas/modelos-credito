@@ -1,0 +1,47 @@
+name: Monitoreo
+
+# Una vez por mes evalúa el modelo congelado con las fotos que publica el workflow de umbrales-credito.
+# No reentrena: si una señal pide actuar, reentrenar es una decisión aparte. Corre después de ese workflow (día 5).
+on:
+  schedule:
+    - cron: "0 12 6 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  monitorear:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Bajar las fotos
+        run: |
+          mkdir -p ../ciclo-credito/data/snapshots
+          gh release download fotos --repo alvarez1lucas/umbrales-credito --pattern "bondora_*.parquet" --dir ../ciclo-credito/data/snapshots
+
+      - name: Monitoreo
+        run: |
+          python -m modelos.monitoreo
+          python -m modelos.sitio
+
+      - name: Commitear resultados
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add outputs README.md README_ES.md
+          git diff --staged --quiet || git commit -m "Monitoreo: foto de $(date +%Y-%m)"
+          git push

@@ -1,0 +1,30 @@
+{
+  "fecha_foto": "2026-10-22",
+  "ultimo_trimestre": "2025Q4",
+  "grado": "actuar",
+  "senales": {
+    "discriminacion": {
+      "valor": -0.0014810554037674173,
+      "grado": "ok"
+    },
+    "calibracion": {
+      "valor": 2.2943703908210917,
+      "grado": "actuar"
+    },
+    "calibracion_por_pais": {
+      "valor": 23.282704115050613,
+      "pais": "Denmark",
+      "grado": "actuar"
+    },
+    "poblacion": {
+      "valor": 0.07295828345693409,
+      "grado": "ok"
+    },
+    "fuera_de_dominio": {
+      "valor": [
+        "Denmark"
+      ],
+      "grado": "actuar"
+    }
+  }
+}
