@@ -145,7 +145,7 @@ def fig_gini(d: dict, L: str) -> go.Figure:
 def fig_gini_tiempo(d: dict, L: str) -> go.Figure:
     t = d["tri"]
     fig = go.Figure([_linea(g["trimestre"], g["gini"], m, r, ".3f") for m, r in (("Scorecard", "s1"), ("LightGBM", "s2")) for g in [t[t["modelo"] == m]]])
-    return _layout(fig, L, "Gini", alto=300, x=_tx(L, "Trimestre de originación", "Origination quarter"))
+    return _layout(fig, L, "Gini", alto=300)
 
 
 def fig_curva(d: dict, L: str) -> go.Figure:
