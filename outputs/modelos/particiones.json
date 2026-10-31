@@ -1,0 +1,26 @@
+{
+  "entrenamiento": {
+    "n": 121623,
+    "malos_pct": 8.01,
+    "desde": "2023-10-01",
+    "hasta": "2024-09-30"
+  },
+  "prueba": {
+    "n": 137835,
+    "malos_pct": 7.88,
+    "desde": "2025-01-01",
+    "hasta": "2025-10-21"
+  },
+  "sin_madurar": {
+    "n": 179815,
+    "malos_pct": 3.25,
+    "desde": "2025-10-22",
+    "hasta": "2026-09-30"
+  },
+  "validacion": {
+    "n": 41119,
+    "malos_pct": 7.0,
+    "desde": "2024-10-01",
+    "hasta": "2024-12-31"
+  }
+}
