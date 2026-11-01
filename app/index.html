@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de crédito</title>
+<meta name="description" content="Probá un corte de riesgo sobre 137.835 créditos reales y puntuá un cliente con una scorecard. Corre en el navegador, sin esperas.">
+<meta property="og:title" content="Simulador de crédito">
+<meta property="og:description" content="Probá un corte de riesgo sobre 137.835 créditos reales y puntuá un cliente con una scorecard.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a78d6'/%3E%3Cpath d='M7 22c4 0 5-11 9-11s5 6 9 6' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="estilos.css">
+<link rel="modulepreload" href="main.js">
+<link rel="modulepreload" href="logica.js">
+<link rel="modulepreload" href="graficos.js">
+<link rel="modulepreload" href="textos.js">
+<link rel="preload" href="datos/prueba.bin.gz" as="fetch" crossorigin>
+<script>
+  try { const t = localStorage.getItem("tema"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<script type="module" src="main.js"></script>
+</head>
+<body>
+<a class="saltar" href="#contenido" data-t="saltar"></a>
+
+<header class="barra">
+  <div class="barra-in">
+    <a class="marca" href="../" id="enlace-sitio">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M7 22c4 0 5-11 9-11s5 6 9 6"/></svg>
+      <span data-t="marca"></span>
+    </a>
+    <nav class="pestanas" role="tablist" data-t-aria="secciones">
+      <button role="tab" id="tab-corte" aria-controls="panel-corte" data-t="tabCorte"></button>
+      <button role="tab" id="tab-cliente" aria-controls="panel-cliente" data-t="tabCliente"></button>
+      <button role="tab" id="tab-metodo" aria-controls="panel-metodo" data-t="tabMetodo"></button>
+    </nav>
+    <div class="acciones">
+      <div class="segmento chico" role="group" aria-label="Idioma / Language">
+        <button id="es" lang="es">ES</button>
+        <button id="en" lang="en">EN</button>
+      </div>
+      <button class="icono" id="tema" data-t-aria="cambiarTema">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="contenido">
+  <noscript><p class="aviso grave">Esta app necesita JavaScript. / This app needs JavaScript.</p></noscript>
+  <p class="aviso grave" id="error" hidden></p>
+
+  <section id="panel-corte" role="tabpanel" aria-labelledby="tab-corte">
+    <div class="intro">
+      <h1 data-t="tituloCorte"></h1>
+      <p class="bajada" id="bajada-corte"></p>
+    </div>
+    <div class="rejilla">
+      <aside class="tarjeta controles">
+        <div class="grupo">
+          <h2 class="etq" data-t="atajos"></h2>
+          <div class="chips" id="atajos"></div>
+        </div>
+        <div class="grupo">
+          <h2 class="etq" data-t="regla"></h2>
+          <div class="segmento" id="regla" role="radiogroup" data-t-aria="regla">
+            <button role="radio" data-v="pd" data-t="reglaPd"></button>
+            <button role="radio" data-v="margen" data-t="reglaMargen"></button>
+          </div>
+          <p class="ayuda" id="ayuda-regla"></p>
+        </div>
+        <div class="grupo control" id="grupo-corte">
+          <label for="corte"><span data-t="corte"></span><output id="v-corte"></output></label>
+          <input type="range" id="corte" min="1" max="40" step="0.25">
+        </div>
+        <div class="grupo control">
+          <label for="costo"><span data-t="costo"></span><output id="v-costo"></output></label>
+          <input type="range" id="costo" min="0" max="20" step="0.5">
+          <p class="ayuda" data-t="ayudaCosto"></p>
+        </div>
+        <div class="grupo control">
+          <label for="lgd"><span data-t="lgd"></span><output id="v-lgd"></output></label>
+          <input type="range" id="lgd" min="30" max="90" step="1">
+          <p class="ayuda" data-t="ayudaLgd"></p>
+        </div>
+        <div class="grupo">
+          <h2 class="etq" data-t="paises"></h2>
+          <div class="chips" id="f-paises"></div>
+        </div>
+        <div class="grupo">
+          <h2 class="etq" data-t="ratings"></h2>
+          <div class="chips" id="f-ratings"></div>
+          <p class="ayuda" data-t="ayudaFiltros"></p>
+        </div>
+        <div class="botones">
+          <button class="boton" id="compartir" data-t="compartir"></button>
+          <button class="boton suave" id="reiniciar" data-t="reiniciar"></button>
+        </div>
+      </aside>
+
+      <div class="resultados">
+        <p class="titular" id="titular" aria-live="polite"></p>
+        <div id="avisos"></div>
+        <div class="kpis" id="kpis"></div>
+        <figure class="tarjeta figura">
+          <figcaption>
+            <h2 data-t="tituloCurva"></h2>
+            <p id="sub-curva"></p>
+          </figcaption>
+          <div class="grafico" id="g-curva"></div>
+          <p class="nota" id="nota-curva"></p>
+        </figure>
+        <section class="tarjeta figura">
+          <div class="cabecera">
+            <div>
+              <h2 data-t="tituloSegmento"></h2>
+              <p data-t="subSegmento"></p>
+            </div>
+            <div class="segmento chico" id="segmento" role="radiogroup" data-t-aria="tituloSegmento">
+              <button role="radio" data-v="pais" data-t="porPais"></button>
+              <button role="radio" data-v="rating" data-t="porRating"></button>
+            </div>
+          </div>
+          <div class="tabla" id="tabla-seg"></div>
+        </section>
+        <section class="tarjeta figura">
+          <div class="cabecera"><div>
+            <h2 data-t="tituloReglas"></h2>
+            <p data-t="subReglas"></p>
+          </div></div>
+          <div class="tabla" id="tabla-reglas"></div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <section id="panel-cliente" role="tabpanel" aria-labelledby="tab-cliente" hidden>
+    <div class="intro">
+      <h1 data-t="tituloCliente"></h1>
+      <p class="bajada" data-t="bajadaCliente"></p>
+    </div>
+    <div class="rejilla">
+      <aside class="tarjeta controles">
+        <div class="dos">
+          <div class="grupo campo"><label for="c-pais" data-t="pais"></label><select id="c-pais"></select></div>
+          <div class="grupo campo"><label for="c-rating">Rating</label><select id="c-rating"></select></div>
+        </div>
+        <div class="dos">
+          <div class="grupo campo"><label for="c-monto" data-t="monto"></label><input id="c-monto" type="number" inputmode="numeric" min="100" max="15000" step="100"></div>
+          <div class="grupo campo"><label for="c-ingreso" data-t="ingreso"></label><input id="c-ingreso" type="number" inputmode="numeric" min="300" max="15000" step="100"></div>
+        </div>
+        <div class="grupo control">
+          <label for="c-tasa"><span data-t="tasa"></span><output id="v-tasa"></output></label>
+          <input type="range" id="c-tasa" min="5" max="35" step="0.5">
+        </div>
+        <div class="grupo control">
+          <label for="c-plazo"><span data-t="plazo"></span><output id="v-plazo"></output></label>
+          <input type="range" id="c-plazo" min="0" max="9" step="1">
+        </div>
+      </aside>
+
+      <div class="resultados">
+        <div id="veredicto"></div>
+        <div id="avisos-cliente"></div>
+        <div class="kpis" id="kpis-cliente"></div>
+        <figure class="tarjeta figura">
+          <figcaption>
+            <h2 data-t="tituloAportes"></h2>
+            <p id="sub-aportes"></p>
+          </figcaption>
+          <div class="grafico" id="g-aportes"></div>
+        </figure>
+        <figure class="tarjeta figura">
+          <figcaption>
+            <h2 data-t="tituloPosicion"></h2>
+            <p id="sub-posicion"></p>
+          </figcaption>
+          <div class="grafico" id="g-posicion"></div>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="panel-metodo" role="tabpanel" aria-labelledby="tab-metodo" hidden>
+    <div class="intro">
+      <h1 data-t="tituloMetodo"></h1>
+      <p class="bajada" data-t="bajadaMetodo"></p>
+    </div>
+    <div class="metodo" id="metodo"></div>
+  </section>
+</main>
+
+<div class="pegado" id="pegado" aria-hidden="true"></div>
+<div class="brindis" id="brindis" role="status"></div>
+<footer class="pie"><p id="pie"></p></footer>
+</body>
+</html>
