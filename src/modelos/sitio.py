@@ -1,11 +1,12 @@
 """Sitio bilingüe en HTML estático, generado desde outputs/, y READMEs.
 
-`python -m modelos.sitio` escribe site/index.html, site/en/index.html, README.md y README_ES.md.
+`python -m modelos.sitio` escribe site/index.html, site/en/index.html, README.md y README_ES.md, y copia la app a site/app/.
 """
 
 from __future__ import annotations
 
 import json
+import shutil
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -415,6 +416,8 @@ th{color:var(--text2);font-weight:600}
 .sintesis h2{margin:16px 0 4px}
 .sintesis ol{padding-left:20px;margin:8px 0}
 .sintesis li{margin:10px 0}
+.cta{display:inline-block;margin:16px 0 0;padding:10px 16px;background:var(--accent);color:#fff;border-radius:8px;font-weight:600;text-decoration:none}
+.cta:hover{filter:brightness(1.07)}
 footer{color:var(--muted);font-size:.85rem;margin-top:48px;border-top:1px solid var(--line);padding-top:16px}
 """
 
@@ -446,6 +449,7 @@ def pagina(d: dict, L: str) -> str:
     sub = ("Si un modelo le gana al rating que la empresa ya tiene, qué corte conviene, dónde falla y cuándo deja de valer, con datos reales de una cartera de consumo."
            if es else "Whether a model beats the rating the lender already has, which cutoff pays off, where it fails and when it stops holding, with real data from a consumer portfolio.")
     otro = ("English", "en/") if es else ("Español", "../")
+    cta = ('<a class="cta" href="app/?lang=es">Probá el simulador con los créditos reales →</a>' if es else '<a class="cta" href="../app/?lang=en">Try the simulator on the real loans →</a>')
     pie = (f"Datos: dos fotos de la cartera de Bondora. Foto más reciente: {d['alertas']['fecha_foto']}. Código y método: <a href=\"{repo}\">{repo}</a>."
            if es else f"Data: two snapshots of Bondora's portfolio. Latest snapshot: {d['alertas']['fecha_foto']}. Code and methods: <a href=\"{repo}\">{repo}</a>.")
     js = JS_TEMA % (json.dumps({k: list(v) for k, v in SERIES.items()}), json.dumps(TINTA))
@@ -465,6 +469,7 @@ def pagina(d: dict, L: str) -> str:
 <header><h1>{titulo}</h1><a class="idioma" href="{otro[1]}">{otro[0]}</a></header>
 <p class="sub">{sub}</p>
 <div class="tiles">{hero}</div>
+{cta}
 {sint}
 {sec}
 <footer>{pie}</footer>
@@ -502,7 +507,7 @@ A risk model is judged by the decisions it improves, not by its Gini. This proje
 | Does it still hold? | It ranks well but the level shifted: gap from {c['br_ini']} to {c['br_fin']} points with a stable Gini |
 | What does a 12-month model miss? | Default goes from {c['d12']}% at 12 months to {c['d36']}% at 36; treating prepayment as censoring would say {c['km36']}% |
 
-**Stack:** Python (scikit-learn, LightGBM, SHAP, pandas, DuckDB), scorecard with WoE/IV built by hand, Aalen-Johansen for competing risks, Streamlit, pytest, GitHub Actions, GitHub Pages.
+**Stack:** Python (scikit-learn, LightGBM, SHAP, pandas, DuckDB), scorecard with WoE/IV built by hand, Aalen-Johansen for competing risks, JavaScript with hand-built SVG charts, pytest, GitHub Actions, GitHub Pages.
 
 ## Reproduce
 
@@ -512,7 +517,7 @@ Requires the Bondora snapshots from [umbrales-credito](https://github.com/alvare
 pip install -r requirements.txt && pip install -e .
 python -m modelos.entrenar && python -m modelos.corte && python -m modelos.validacion
 python -m modelos.supervivencia && python -m modelos.monitoreo && python -m modelos.sitio
-python -m modelos.exportar_app && streamlit run app/streamlit_app.py
+python -m modelos.exportar_app && python -m modelos.sitio && python -m http.server -d site
 pytest
 ```
 
@@ -537,7 +542,7 @@ Un modelo de riesgo se juzga por las decisiones que mejora, no por su Gini. Este
 | ¿Sigue valiendo? | Ordena bien, pero el nivel se corrió: brecha de {c['br_ini']} a {c['br_fin']} puntos con el Gini estable |
 | ¿Qué no ve a 12 meses? | El default pasa de {c['d12']}% a 12 meses a {c['d36']}% a 36; tratar la cancelación como censura diría {c['km36']}% |
 
-**Stack:** Python (scikit-learn, LightGBM, SHAP, pandas, DuckDB), scorecard con WoE/IV escrita a mano, Aalen-Johansen para riesgos competidores, Streamlit, pytest, GitHub Actions, GitHub Pages.
+**Stack:** Python (scikit-learn, LightGBM, SHAP, pandas, DuckDB), scorecard con WoE/IV escrita a mano, Aalen-Johansen para riesgos competidores, JavaScript con gráficos SVG propios, pytest, GitHub Actions, GitHub Pages.
 
 ## Reproducir
 
@@ -547,12 +552,17 @@ Necesita las fotos de Bondora de [umbrales-credito](https://github.com/alvarez1l
 pip install -r requirements.txt && pip install -e .
 python -m modelos.entrenar && python -m modelos.corte && python -m modelos.validacion
 python -m modelos.supervivencia && python -m modelos.monitoreo && python -m modelos.sitio
-python -m modelos.exportar_app && streamlit run app/streamlit_app.py
+python -m modelos.exportar_app && python -m modelos.sitio && python -m http.server -d site
 pytest
 ```
 
 Autor: Lucas Alvarez · [GitHub](https://github.com/alvarez1lucas) · Relacionado: [Umbrales de crédito](https://github.com/alvarez1lucas/umbrales-credito), [Mora de los hogares en Argentina](https://github.com/alvarez1lucas/mora_argentina)
 """
+
+
+def copiar_app(destino) -> None:
+    shutil.rmtree(destino / "app", ignore_errors=True)
+    shutil.copytree(ROOT / "app", destino / "app", ignore=shutil.ignore_patterns("__pycache__"))
 
 
 def main() -> None:
@@ -562,6 +572,7 @@ def main() -> None:
         f = destino / rel
         f.parent.mkdir(parents=True, exist_ok=True)
         f.write_text(pagina(d, L), encoding="utf-8")
+    copiar_app(destino)
     (ROOT / "README.md").write_text(readme(d, "en"), encoding="utf-8")
     (ROOT / "README_ES.md").write_text(readme(d, "es"), encoding="utf-8")
     print(f"sitio: {destino}, README.md, README_ES.md")
