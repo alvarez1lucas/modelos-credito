@@ -1,95 +1,143 @@
+import json
+import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import logica as lg  # noqa: E402
+import referencia_app as ref  # noqa: E402
 
 from modelos import corte  # noqa: E402
+from modelos.config import path  # noqa: E402
 from modelos.puntaje import cargar_modelos, pd_scorecard  # noqa: E402
+
+RAIZ = Path(__file__).resolve().parents[1]
+BASE = {"regla": "pd", "corte": 0.2, "costo": 10, "lgd": 0.69, "sinPaises": [], "sinRatings": []}
+ESCENARIOS = [BASE, {**BASE, "corte": 0.4}, {**BASE, "corte": 0.0761, "lgd": 0.5}, {**BASE, "regla": "margen"}, {**BASE, "regla": "margen", "costo": 5},
+              {**BASE, "corte": 0.4, "sinRatings": ["E", "F", "G"]}, {**BASE, "corte": 0.12, "costo": 0, "sinPaises": ["Denmark", "Latvia"]},
+              {**BASE, "regla": "margen", "costo": 20, "lgd": 0.9, "sinPaises": ["Finland"], "sinRatings": ["AA"]}, {**BASE, "corte": 0.001}]
+CLIENTES = [{"monto": 2000, "tasa": 0.18, "plazo": 60, "ingreso": 2300, "pais": "Finland", "rating": "C"},
+            {"monto": 518, "tasa": 0.1154, "plazo": 24, "ingreso": 1316.5325, "pais": "Estonia", "rating": "AA"},
+            {"monto": 15000, "tasa": 0.35, "plazo": 120, "ingreso": 300, "pais": "Latvia", "rating": "G"},
+            {"monto": 3000, "tasa": 0.22, "plazo": 48, "ingreso": 1800, "pais": "Denmark", "rating": "E"},
+            {"monto": 100, "tasa": 0.05, "plazo": 6, "ingreso": 15000, "pais": "Netherlands", "rating": "A"}]
+
+
+def _perfil(c):
+    q = ref.cuota(c["monto"], c["tasa"], c["plazo"])
+    return {**c, "carga_pct": 100 * q / c["ingreso"]}
 
 
 @pytest.fixture(scope="module")
-def sc():
-    return lg.cargar_scorecard()
+def js():
+    if shutil.which("node") is None:
+        if os.environ.get("CI"):
+            pytest.fail("Falta Node en CI")
+        pytest.skip("Node no está instalado")
+    p = subprocess.run(["node", str(RAIZ / "tests" / "paridad.mjs")], input=json.dumps({"escenarios": ESCENARIOS, "clientes": CLIENTES}), capture_output=True, text=True, encoding="utf-8", check=True)
+    return json.loads(p.stdout)
 
 
-def _df(**kw):
-    base = {"pais": ["Finland", "Estonia"], "rating": ["A", "C"], "ingreso": [2000.0, 2500.0], "monto": [1000.0, 3000.0], "tasa": [0.18, 0.22],
-            "plazo": [36.0, 60.0], "cuota": [36.15, 82.8], "carga_pct": [1.8, 3.3], "npv_bondora": [0.1, 0.1]}
-    return pd.DataFrame({**base, **kw})
+@pytest.fixture(scope="module")
+def df():
+    return ref.cargar_prueba()
 
 
-def test_puntaje_json_coincide_con_el_modelo_guardado(sc):
+@pytest.fixture(scope="module")
+def meta():
+    return ref.cargar_meta()
+
+
+def test_datos_exportados_reproducen_el_proyecto(df):
+    assert len(df) == 137835
+    assert df["pd"].is_monotonic_increasing
+    assert 100 * df["malo"].mean() == pytest.approx(7.883, abs=.01)
+    assert ref.resultado_credito(df, 10, .69).sum() / 1e6 == pytest.approx(2.163, abs=.01)
+
+
+def test_ninguna_pd_supera_el_tope_del_control(df):
+    assert df["pd"].max() < 0.4
+
+
+def test_tope_de_carga_viene_del_entrenamiento(meta):
+    assert 20 < meta["carga_p999"] < 40
+
+
+def test_scorecard_exportada_coincide_con_el_modelo_guardado(meta):
     m = cargar_modelos()
-    d = _df()
-    p = pd_scorecard(m, d)
-    pts = m["scorecard"].puntos(d)
-    for i, f in d.iterrows():
-        r = lg.puntuar(sc, f.to_dict())
+    c = [_perfil(x) for x in CLIENTES]
+    t = pd.DataFrame(c).assign(cuota=lambda d: d["carga_pct"] * d["ingreso"] / 100, npv_bondora=0.1)
+    p = pd_scorecard(m, t)
+    pts = m["scorecard"].puntos(t)
+    for i, x in enumerate(c):
+        r = ref.puntuar(meta["scorecard"], x)
         assert r["pd"] == pytest.approx(p[i], rel=1e-9)
         assert r["puntos"] == pytest.approx(pts[i], rel=1e-9)
 
 
-def test_detalle_suma_el_puntaje(sc):
-    r = lg.puntuar(sc, _df().iloc[0].to_dict())
-    assert sc["base"] + sum(x["puntos"] for x in r["detalle"]) == pytest.approx(r["puntos"])
+def test_resultado_de_la_referencia_igual_al_del_proyecto():
+    t = pd.DataFrame({"monto": [100.0, 200.0], "tasa": [.2, .1], "malo": [0, 1]})
+    assert ref.resultado_credito(t, 10, .5).tolist() == corte.resultado_credito(t, 10, .5).tolist()
 
 
-def test_pais_nuevo_es_neutro(sc):
-    a = lg.puntuar(sc, _df(pais=["Denmark", "Denmark"]).iloc[0].to_dict())
-    v = next(x for x in a["detalle"] if x["variable"] == "pais")
-    assert v["puntos"] == 0
+@pytest.mark.parametrize("i", range(len(ESCENARIOS)))
+def test_escenario_igual_en_javascript_y_en_python(js, df, i):
+    e, s = ESCENARIOS[i], js["escenarios"][i]
+    r = ref.resultado_credito(df, e["costo"], e["lgd"])
+    a = ref.aprobar(df, e)
+    for k, v in ref.resumen(df, a, r).items():
+        assert s["resumen"][k] == (None if v is None else pytest.approx(v, rel=1e-9, abs=1e-6)), k
+    assert s["curva"] == pytest.approx(ref.curva(df, r, e, js["cortes"]), rel=1e-9, abs=1e-6)
+    for campo in ("pais", "rating"):
+        p = ref.por_segmento(df, a, r, campo).set_index("clave")
+        for f in s[campo]:
+            for k in ("creditos", "aprobados", "mora", "cambio"):
+                assert f[k] == pytest.approx(p.loc[f["clave"], k], rel=1e-9, abs=1e-6), (campo, f["clave"], k)
 
 
-def test_cuota_francesa():
-    assert lg.cuota(1000, 0.12, 12) == pytest.approx(88.85, abs=0.01)
+@pytest.mark.parametrize("i", range(len(CLIENTES)))
+def test_cliente_igual_en_javascript_y_en_python(js, df, meta, i):
+    sc, c, s = meta["scorecard"], _perfil(CLIENTES[i]), js["clientes"][i]
+    r = ref.puntuar(sc, c)
+    assert s["pd"] == pytest.approx(r["pd"], rel=1e-12)
+    assert s["puntos"] == pytest.approx(r["puntos"], rel=1e-12)
+    assert [x["puntos"] for x in s["detalle"]] == pytest.approx([x["puntos"] for x in r["detalle"]], rel=1e-12, abs=1e-12)
+    assert sc["base"] + sum(x["puntos"] for x in s["detalle"]) == pytest.approx(s["puntos"])
+    assert s["percentil"] == pytest.approx((df["pd"].to_numpy() < float(pd.Series([r["pd"]]).astype("float32").iloc[0])).mean(), abs=1e-3)
 
 
-@pytest.fixture
-def cartera():
-    return pd.DataFrame({"pais": ["a", "a", "b", "b"], "rating": ["A", "G", "A", "G"], "monto": [100.0] * 4, "tasa": [.2, .2, .2, .1], "malo": [0, 1, 0, 0], "pd": [.05, .5, .1, .1]})
+def test_tasa_de_equilibrio_es_la_primera_que_aprueba(js, meta):
+    sc, costo, lgd = meta["scorecard"], meta["costo"], meta["lgd"]
+    aprueba = lambda c, t: t - costo / 100 - ref.puntuar(sc, _perfil({**c, "tasa": t}))["pd"] * lgd > 0  # noqa: E731
+    for c, s in zip(CLIENTES, js["clientes"]):
+        t = s["equilibrio"]
+        if t is None:
+            assert not any(aprueba(c, i / 1000) for i in range(50, 351))
+        else:
+            assert aprueba(c, t) and not any(aprueba(c, i / 1000) for i in range(50, round(t * 1000)))
 
 
-def test_resultado_igual_al_del_proyecto(cartera):
-    assert lg.resultado_credito(cartera, 10, .5).tolist() == corte.resultado_credito(cartera, 10, .5).tolist()
+def test_pais_nuevo_es_neutro(meta):
+    sc = meta["scorecard"]
+    d = ref.puntuar(sc, _perfil({**CLIENTES[0], "pais": "Denmark"}))["detalle"]
+    assert next(x for x in d if x["variable"] == "pais")["puntos"] == 0
 
 
-def test_regla_margen_compara_con_la_tasa(cartera):
-    assert lg.aprobar(cartera, "margen", 0, 10, .5, [], []).tolist() == [True, False, True, False]
+def test_histograma_cubre_toda_la_cartera(js, df):
+    assert sum(js["histograma"]) == len(df)
 
 
-def test_exclusiones(cartera):
-    assert lg.aprobar(cartera, "pd", 1, 10, .5, ["b"], ["G"]).tolist() == [True, False, False, False]
-
-
-def test_curva_coincide_con_aplicar_el_corte(cartera):
-    df = pd.DataFrame({"pais": "a", "rating": "A", "monto": 100.0, "tasa": .2, "malo": [0, 1, 0, 1, 0], "pd": [.02, .05, .1, .2, .3]})
-    r = lg.resultado_credito(df, 10, .5)
-    c = lg.curva(df, 10, .5).set_index("corte")["resultado"]
-    for k in (.05, .1, .2):
-        assert c[k] == pytest.approx(r[df["pd"].to_numpy() <= k].sum())
-
-
-def test_prueba_exportada_reproduce_el_proyecto():
-    df = lg.cargar_prueba()
-    r = lg.resultado_credito(df, 10, .69)
-    assert 100 * df["malo"].mean() == pytest.approx(7.883, abs=.01)
-    assert r.sum() / 1e6 == pytest.approx(2.163, abs=.01)
-
-
-def test_app_arranca_y_responde():
-    from streamlit.testing.v1 import AppTest
-    at = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app" / "streamlit_app.py"), default_timeout=60).run()
-    assert not at.exception
-    assert len(at.metric) == 7
-    regla = next(r for r in at.radio if "Margen por crédito" in r.options)
-    regla.set_value("Margen por crédito").run()
-    assert not at.exception
-    assert any("Netherlands" in w.value or "Países Bajos" in w.value for w in at.warning)
-    next(r for r in at.radio if "English" in r.options).set_value("English").run()
-    assert not at.exception
+def test_reglas_de_la_app_reproducen_las_del_proyecto(df, meta):
+    t = pd.read_csv(path("outputs") / "corte/reglas_prueba.csv").set_index("regla")
+    r = ref.resultado_credito(df, meta["costo"], meta["lgd"])
+    casos = {"Aprobar todo": {**BASE, "corte": .4}, "Sin ratings E a G": {**BASE, "corte": .4, "sinRatings": ["E", "F", "G"]}, "Corte por KS": {**BASE, "corte": meta["corte_ks"]},
+             "Corte económico": {**BASE, "corte": meta["corte_economico"]}, "Margen esperado por crédito": {**BASE, "regla": "margen"}}
+    for regla, e in casos.items():
+        s = ref.resumen(df, ref.aprobar(df, e), r)
+        assert s["aprobadosPct"] == pytest.approx(t.loc[regla, "aprobados_pct"], abs=.01), regla
+        assert s["cambio"] / 1e6 == pytest.approx(t.loc[regla, "cambio"] / 1e6, abs=.005), regla
