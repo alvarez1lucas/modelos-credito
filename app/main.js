@@ -25,7 +25,7 @@ const pais = (p) => PAISES[e.L][p] ?? p;
 function idiomaInicial() {
   const q = new URLSearchParams(location.search).get("lang");
   if (q === "es" || q === "en") return q;
-  return (navigator.language || "es").toLowerCase().startsWith("es") ? "es" : "en";
+  return "en"; // inglés por defecto; ?lang=es o el botón ES pasan a español
 }
 
 const formatos = new Map();

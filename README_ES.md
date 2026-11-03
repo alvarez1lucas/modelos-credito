@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/alvarez1lucas/modelos-credito/actions/workflows/tests.yml/badge.svg)](https://github.com/alvarez1lucas/modelos-credito/actions/workflows/tests.yml) [![Monitoreo](https://github.com/alvarez1lucas/modelos-credito/actions/workflows/monitoreo.yml/badge.svg)](https://github.com/alvarez1lucas/modelos-credito/actions/workflows/monitoreo.yml) [![Sitio](https://github.com/alvarez1lucas/modelos-credito/actions/workflows/publicar-sitio.yml/badge.svg)](https://github.com/alvarez1lucas/modelos-credito/actions/workflows/publicar-sitio.yml) ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
 
-**[Sitio](https://alvarez1lucas.github.io/modelos-credito/)** · **[App interactiva](https://alvarez1lucas.github.io/modelos-credito/app/)** · **[Ficha del modelo](docs/ficha_modelo.md)** · [English version](README.md)
+**[Sitio](https://alvarez1lucas.github.io/modelos-credito/es/)** · **[App interactiva](https://alvarez1lucas.github.io/modelos-credito/app/?lang=es)** · **[Ficha del modelo](docs/ficha_modelo.md)** · [English version](README.md)
 
 Un modelo de riesgo se juzga por las decisiones que mejora, no por su Gini. Este proyecto entrena con cosechas viejas de una cartera de consumo real, mide con cosechas posteriores y compara siempre contra el rating que la empresa ya tiene. Sin datasets de Kaggle.
 

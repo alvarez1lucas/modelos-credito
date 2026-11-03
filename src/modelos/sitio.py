@@ -1,6 +1,7 @@
 """Sitio bilingüe en HTML estático, generado desde outputs/, y READMEs.
 
-`python -m modelos.sitio` escribe site/index.html, site/en/index.html, README.md y README_ES.md, y copia la app a site/app/.
+`python -m modelos.sitio` escribe site/index.html (inglés), site/es/index.html (español), README.md y README_ES.md, y copia la app a site/app/.
+site/en/ redirige a la raíz para no romper enlaces viejos.
 """
 
 from __future__ import annotations
@@ -105,7 +106,7 @@ def cifras(d: dict, L: str) -> dict:
         "d12": pp(sup["default_12_pct"]), "d36": pp(sup["default_ultimo_pct"]), "km36": pp(sup["km_ultimo_pct"]), "p36": pp(sup["pago_ultimo_pct"], 0), "v36": pp(sup["vivo_ultimo_pct"], 0),
         "p12": pp(sup["pago_12_pct"], 0), "mult": pp(sup["default_ultimo_pct"] / sup["default_12_pct"], 0),
         "grado": GRADO[L][d["alertas"]["grado"]], "pais_b": PAIS[L].get(pais_b["pais"], pais_b["pais"]), "pais_v": pp(pais_b["valor"], 0),
-        "umbrales": "https://alvarez1lucas.github.io/umbrales-credito/" + ("" if L == "es" else "en/"),
+        "umbrales": "https://alvarez1lucas.github.io/umbrales-credito/" + ("es/" if L == "es" else ""),
     }
 
 
@@ -448,8 +449,8 @@ def pagina(d: dict, L: str) -> str:
     titulo = "Modelos de crédito" if es else "Credit risk models"
     sub = ("Si un modelo le gana al rating que la empresa ya tiene, qué corte conviene, dónde falla y cuándo deja de valer, con datos reales de una cartera de consumo."
            if es else "Whether a model beats the rating the lender already has, which cutoff pays off, where it fails and when it stops holding, with real data from a consumer portfolio.")
-    otro = ("English", "en/") if es else ("Español", "../")
-    cta = ('<a class="cta" href="app/?lang=es">Probá el simulador con los créditos reales →</a>' if es else '<a class="cta" href="../app/?lang=en">Try the simulator on the real loans →</a>')
+    otro = ("English", "../") if es else ("Español", "es/")
+    cta = ('<a class="cta" href="../app/?lang=es">Probá el simulador con los créditos reales →</a>' if es else '<a class="cta" href="app/?lang=en">Try the simulator on the real loans →</a>')
     pie = (f"Datos: dos fotos de la cartera de Bondora. Foto más reciente: {d['alertas']['fecha_foto']}. Código y método: <a href=\"{repo}\">{repo}</a>."
            if es else f"Data: two snapshots of Bondora's portfolio. Latest snapshot: {d['alertas']['fecha_foto']}. Code and methods: <a href=\"{repo}\">{repo}</a>.")
     js = JS_TEMA % (json.dumps({k: list(v) for k, v in SERIES.items()}), json.dumps(TINTA))
@@ -492,7 +493,7 @@ def readme(d: dict, L: str) -> str:
 
 {badges}
 
-**[Live site]({url}en/)** · **[Interactive app]({cfg['app_url']})** · **[Model card](docs/ficha_modelo.md)** · [Versión en español](README_ES.md)
+**[Live site]({url})** · **[Interactive app]({cfg['app_url']})** · **[Model card](docs/ficha_modelo.md)** · [Versión en español](README_ES.md)
 
 A risk model is judged by the decisions it improves, not by its Gini. This project trains on old vintages of a real consumer portfolio, measures on later ones, and always compares against the rating the lender already has. No Kaggle datasets.
 
@@ -527,7 +528,7 @@ Author: Lucas Alvarez · [GitHub](https://github.com/alvarez1lucas) · Related: 
 
 {badges}
 
-**[Sitio]({url})** · **[App interactiva]({cfg['app_url']})** · **[Ficha del modelo](docs/ficha_modelo.md)** · [English version](README.md)
+**[Sitio]({url}es/)** · **[App interactiva]({cfg['app_url']}?lang=es)** · **[Ficha del modelo](docs/ficha_modelo.md)** · [English version](README.md)
 
 Un modelo de riesgo se juzga por las decisiones que mejora, no por su Gini. Este proyecto entrena con cosechas viejas de una cartera de consumo real, mide con cosechas posteriores y compara siempre contra el rating que la empresa ya tiene. Sin datasets de Kaggle.
 
@@ -568,10 +569,14 @@ def copiar_app(destino) -> None:
 def main() -> None:
     d = datos()
     destino = ROOT / settings()["sitio"]["destino"]
-    for L, rel in (("es", "index.html"), ("en", "en/index.html")):
+    for L, rel in (("en", "index.html"), ("es", "es/index.html")):
         f = destino / rel
         f.parent.mkdir(parents=True, exist_ok=True)
         f.write_text(pagina(d, L), encoding="utf-8")
+    (destino / "en").mkdir(exist_ok=True)
+    (destino / "en" / "index.html").write_text(
+        '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=../">'
+        '<link rel="canonical" href="../"><title>Moved</title></head><body><a href="../">../</a></body></html>', encoding="utf-8")
     copiar_app(destino)
     (ROOT / "README.md").write_text(readme(d, "en"), encoding="utf-8")
     (ROOT / "README_ES.md").write_text(readme(d, "es"), encoding="utf-8")

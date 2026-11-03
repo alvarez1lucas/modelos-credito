@@ -56,7 +56,7 @@ export const T = {
       ["Scorecard", "Cada variable se agrupa en tramos con WoE y entra en una regresión logística. La tabla de puntos usa base 600 con odds de 50 y duplica las odds cada 20 puntos. La tasa de equilibrio se busca probando tasas, porque la tasa también mueve la PD."],
       ["Cómo funciona", "Sin servidor: los créditos llegan comprimidos y cada número se calcula en tu navegador. Los tests comparan estos cálculos con la versión en Python y con los resultados del proyecto."],
     ],
-    enlaces: [["Sitio del proyecto", SITIO], ["Código", REPO], ["Ficha del modelo", FICHA]], pie: "Datos: Bondora. Ejercicio de portfolio de Lucas Alvarez.", sitio: "../",
+    enlaces: [["Sitio del proyecto", `${SITIO}es/`], ["Código", REPO], ["Ficha del modelo", FICHA]], pie: "Datos: Bondora. Ejercicio de portfolio de Lucas Alvarez.", sitio: "../es/",
     errorDatos: "No se pudieron cargar los datos. Recargá la página.", errorNavegador: "Este navegador es muy antiguo para esta app. Probá con una versión actual.",
   },
   en: {
@@ -110,7 +110,7 @@ export const T = {
       ["Scorecard", "Each variable is binned with WoE and enters a logistic regression. The points table uses base 600 at odds of 50 and doubles the odds every 20 points. The break-even rate is found by trying rates, because the rate also moves PD."],
       ["How it works", "No server: the loans arrive compressed and every number is computed in your browser. Tests compare these calculations with the Python version and the project's results."],
     ],
-    enlaces: [["Project site", `${SITIO}en/`], ["Code", REPO], ["Model card", FICHA]], pie: "Data: Bondora. Portfolio exercise by Lucas Alvarez.", sitio: "../en/",
+    enlaces: [["Project site", SITIO], ["Code", REPO], ["Model card", FICHA]], pie: "Data: Bondora. Portfolio exercise by Lucas Alvarez.", sitio: "../",
     errorDatos: "The data could not be loaded. Reload the page.", errorNavegador: "This browser is too old for this app. Try a current version.",
   },
 };

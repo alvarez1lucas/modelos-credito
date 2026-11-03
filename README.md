@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/alvarez1lucas/modelos-credito/actions/workflows/tests.yml/badge.svg)](https://github.com/alvarez1lucas/modelos-credito/actions/workflows/tests.yml) [![Monitoreo](https://github.com/alvarez1lucas/modelos-credito/actions/workflows/monitoreo.yml/badge.svg)](https://github.com/alvarez1lucas/modelos-credito/actions/workflows/monitoreo.yml) [![Site](https://github.com/alvarez1lucas/modelos-credito/actions/workflows/publicar-sitio.yml/badge.svg)](https://github.com/alvarez1lucas/modelos-credito/actions/workflows/publicar-sitio.yml) ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
 
-**[Live site](https://alvarez1lucas.github.io/modelos-credito/en/)** · **[Interactive app](https://alvarez1lucas.github.io/modelos-credito/app/)** · **[Model card](docs/ficha_modelo.md)** · [Versión en español](README_ES.md)
+**[Live site](https://alvarez1lucas.github.io/modelos-credito/)** · **[Interactive app](https://alvarez1lucas.github.io/modelos-credito/app/)** · **[Model card](docs/ficha_modelo.md)** · [Versión en español](README_ES.md)
 
 A risk model is judged by the decisions it improves, not by its Gini. This project trains on old vintages of a real consumer portfolio, measures on later ones, and always compares against the rating the lender already has. No Kaggle datasets.
 
