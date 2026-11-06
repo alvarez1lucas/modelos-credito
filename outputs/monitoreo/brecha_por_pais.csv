@@ -1,6 +1,6 @@
 pais,n,pd_media_pct,observado_pct,brecha_pp,fuera_de_dominio
-Denmark,1468,9.1424,32.4251,23.2827,True
-Estonia,9833,8.4715,7.6681,-0.8034,False
-Finland,32960,5.7725,7.3574,1.5849,False
-Latvia,1648,20.3273,28.5801,8.2528,False
-Netherlands,10461,2.8277,5.1334,2.3057,False
+Denmark,2936,9.1424,32.4251,23.2827,True
+Estonia,19666,8.4715,7.6681,-0.8034,False
+Finland,65920,5.7725,7.3574,1.5849,False
+Latvia,3296,20.3273,28.5801,8.2528,False
+Netherlands,20922,2.8277,5.1334,2.3057,False
